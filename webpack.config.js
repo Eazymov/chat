@@ -42,13 +42,17 @@ module.exports = {
         loader: 'babel-loader'
       }, {
         test: /\.(png|jpg|gif|svg)$/,
-        loader: "file-loader"
+        loader: "file-loader?name=/assets/[name].[ext]"
+      }, {
+        test: /\.pug$/,
+        loader: 'pug-loader'
       }, {
         test: /\.vue$/,
         loader: 'vue-loader',
         exclude: /node_modules/,
         options: {
           loaders: {
+            pug: 'pug-html-loader',
             scss: 'vue-style-loader!css-loader!sass-loader',
             sass: 'vue-style-loader!css-loader!sass-loader?indentedSyntax'
           }

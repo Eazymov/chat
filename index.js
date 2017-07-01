@@ -7,11 +7,10 @@ mongoose.Promise = global.Promise
 mongoose.connection.on('error', err => console.error(err.message))
 
 require('./models/user.js')
+require('./models/message.js')
 
 const app = require('./app.js')
 
-app.set('port', process.env.PORT || 8080)
-
-app.listen(app.get('port'), () => {
+app.listen(8080, () => {
   console.log('>> Listening on port 8080')
 })

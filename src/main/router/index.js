@@ -1,9 +1,9 @@
 import Vue from 'vue'
-import Router from 'vuex'
+import Router from 'vue-router'
 
 Vue.use(Router)
 
-import Homepage from '../components/homepage.vue'
+import AppConversation from '../components/messagesRoute/appMessagesRoute.vue'
 
 export default new Router({
   linkActiveClass: 'active',
@@ -13,6 +13,7 @@ export default new Router({
   history: true,
 
   routes: [
-    { path: '/', component: Homepage }
+    { path: '/', redirect: '/conversation' },
+    { path: '/conversation', component: AppConversation }
   ]
 })

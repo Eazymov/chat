@@ -2,26 +2,22 @@ const path = require('path')
 const express = require('express')
 const session = require('express-session')
 const mongoose = require('mongoose')
-const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const passport = require('passport')
-const expressValidator = require('express-validator')
 const routes = require('./routes')
 
 require('./handlers/passport.js')
 
 const app = express()
 
+app.set('view engine', 'pug')
 app.set('views', path.join(__dirname, 'views'))
 
+app.use('/dist', express.static(__dirname + '/dist'))
 app.use('/public', express.static(__dirname + '/public'))
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
-
-app.use(expressValidator())
-app.use(cookieParser())
-
 app.use(session({ secret: 'SECRET', resave: true, saveUninitialized: true}))
 
 app.use(passport.initialize())

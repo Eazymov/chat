@@ -1,8 +1,8 @@
 const path = require('path')
 const mongoose = require('mongoose')
 const User = mongoose.model('User')
-const helpers = require('../handlers/helpers.js')
 const passport = require('passport')
+const helpers = require('../handlers/helpers.js')
 
 exports.checkAuth = (req, res, next) => {
   req.isAuthenticated() ? next() : res.redirect('/login')
@@ -34,60 +34,49 @@ exports.login = (req, res) => {
   })(req, res)
 }
 
-exports.signup = (req, res) => {
+exports.signup = async (req, res) => {
   const { firstname, lastname, username, email, password, gender } = req.body;
-  const regdate = helpers.getFullDate();
-  const lastSeen = regdate;
-  const rights = 'default';
+  let user = null;
 
-  User.findOne({ username }).exec((err, user) => {
+  user = await User.findOne({ username })
+
+  if (user) {
+    const err = { message: 'This username is already taken' }
+    return res.send({ err })
+  }
+
+  user = await User.findOne({ email })
+
+  if (user) {
+    const err = { message: 'This email is already taken' }
+    return res.send({ err });
+  }
+
+  const newUser = new User({
+    firstname,
+    lastname,
+    username,
+    email,
+    password,
+    gender
+  })
+
+  const test = helpers.checkUserData(newUser);
+
+  if (!test.result) {
+    const err = { message: test.comment }
+    return res.send({ err })
+  }
+
+  newUser.save((err, user) => {
     if (err)
       return res.send({ err })
 
-    if (user) {
-      const err = { message: 'This username is already taken' }
-      return res.send({ err });
-    }
-
-    User.findOne({ email }).exec((err, user) => {
+    req.logIn(user, err => {
       if (err)
         return res.send({ err })
 
-      if (user) {
-        const err = { message: 'This email is already taken' }
-        return res.send({ err });
-      }
-
-      const newUser = new User({
-        firstname,
-        lastname,
-        username,
-        email,
-        password,
-        gender,
-        regdate,
-        lastSeen,
-        rights
-      })
-
-      const test = helpers.checkUserData(newUser);
-
-      if (test.result) {
-        newUser.save((err, user) => {
-          if (err)
-            return res.send({ err })
-
-          req.logIn(user, err => {
-            if (err)
-              return res.send({ err })
-
-            res.send({ success: true })
-          })
-        })
-      } else {
-        const err = { message: test.comment }
-        return res.send({ err })
-      }
+      res.send({ success: true })
     })
   })
 }

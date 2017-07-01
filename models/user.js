@@ -1,28 +1,11 @@
 const mongoose = require('mongoose')
-const validator = require('validator')
 const passportLocalMongoose = require('passport-local-mongoose')
+const helpers = require('../handlers/helpers.js')
 
 const userSchema = new mongoose.Schema({
   rights: {
     type: String,
-    required: true,
-    trim: true
-  },
-  email: {
-    type: String,
-    unique: true,
-    required: true,
-    trim: true
-  },
-  username: {
-    unique: true,
-    type: String,
-    required: true,
-    trim: true
-  },
-  password: {
-    type: String,
-    required: true,
+    default: 'default',
     trim: true
   },
   firstname: {
@@ -35,9 +18,26 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  regdate: {
+  username: {
+    unique: true,
     type: String,
     required: true,
+    trim: true
+  },
+  email: {
+    type: String,
+    unique: true,
+    required: true,
+    trim: true
+  },
+  password: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  avatar: {
+    type: String,
+    default: 'default.png',
     trim: true
   },
   gender: {
@@ -45,10 +45,23 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  regdate: {
+    type: String,
+    default: helpers.getFullDate(),
+    trim: true
+  },
   lastSeen: {
     type: String,
-    required: true,
+    default: helpers.getFullDate(),
     trim: true
+  },
+  friends: {
+    type: Array,
+    default: []
+  },
+  dialogs: {
+    type: Array,
+    default: []
   }
 })
 
