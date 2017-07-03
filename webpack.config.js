@@ -1,31 +1,32 @@
-const webpack = require('webpack')
 const path = require('path');
+const webpack = require('webpack');
+
+process.noDeprecation = true;
 
 module.exports = {
   entry: {
     login: [
       'webpack-hot-middleware/client',
-      './src/login/main.js',
       'babel-polyfill',
-      'fetch-polyfill'
+      'fetch-polyfill',
+      './public/src/login/main.js'
     ],
     main: [
       'webpack-hot-middleware/client',
-      './src/main/main.js',
       'babel-polyfill',
-      'fetch-polyfill'
+      'fetch-polyfill',
+      './public/src/main/main.js'
     ]
   },
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    publicPath: '/dist',
+    path: path.resolve(__dirname, 'public', 'dist'),
+    publicPath: '/public/dist',
     filename: '[name].build.js'
   },
   devServer: {
     hot: true,
     port: 8000,
-    publicPath: '/assets/',
-    contentBase: 'dist/',
+    publicPath: '/public/dist/',
     historyApiFallback: true
   },
   module: {

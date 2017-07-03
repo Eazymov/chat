@@ -1,36 +1,29 @@
-const url = require('url')
 const path = require('path')
 const mongoose = require('mongoose')
 const Message = mongoose.model('Message')
 const User = mongoose.model('User')
+const { createConnection, sendMessage } = require('../handlers/webSocket')
 
-const ws = new require('ws')
-const wss = new ws.Server({ port: 8081 })
-const users = {}
+const users = {};
 
-wss.on('connection', (ws, req) => {
-  const URL = url.parse(req.url)
-  const id = URL.query;
-
-  users[id] = ws;
-
-  console.log(`New ws connection ${id}`)
-
-  ws.on('close', () => {
-    console.log(`Connection ${id} closed`);
-
-    delete users[id];
-  })
-})
+createConnection(users);
 
 exports.chatPage = (req, res) => {
-  res.sendFile(path.resolve(__dirname, '../views/index.html'))
+  res.render('index', { title: 'Chat', base: '/chat/' })
+}
+
+exports.getDialogs = async (req, res) => {
+  const dialogs = await User.find()
+
+  res.json({ dialogs })
 }
 
 exports.getFriends = async (req, res) => {
-  const friends = await User.find()
+  const { friendList, limit } = req.body;
 
-  res.send({ friends })
+  const friends = await User.find({ '_id': { $in: friendList } }).limit(limit);
+
+  res.json(friends);
 }
 
 exports.getCurrentUser = async (req, res) => {
@@ -38,41 +31,25 @@ exports.getCurrentUser = async (req, res) => {
   // res.send({ user })
   const user = await User.findById('594fdaa22c6bb513a08b4648')
 
-  res.send({ user })
+  res.json({ user })
 }
 
-exports.saveMessage = (req, res) => {
-  const { sender_id, recipient_id, content } = req.body;
-  const newMessage = new Message({
-    sender_id,
-    recipient_id,
-    content
-  })
+exports.saveMessage = async ({ body }, res) => {
+  const { sender_id, recipient_id } = body;
+  const message = await (new Message(body)).save()
+  const response = JSON.stringify({ message })
 
-  newMessage.save((err, message) => {
-    if (err)
-      return res.send({ err })
+  sendMessage(users, response, [sender_id, recipient_id])
 
-    const response = JSON.stringify({ message })
-
-    sendMessage(users, response, [sender_id, recipient_id])
-
-    res.send({ success: true })
-  })
+  res.json({ success: true })
 }
 
-const sendMessage = async (users, response, ids) => {
-  ids = [...new Set(ids)];
-
-  ids.forEach(id => {
-    const user = users[id];
-
-    if (user)
-      user.send(response)
-  })
+exports.deleteMessage = async ({ body }, res) => {
+  await Message.findById(body.id).remove();
+  res.end();
 }
 
-exports.getDialog = async (req, res) => {
+exports.getConversation = async (req, res) => {
   const { sender_id, recipient_id } = req.body;
   const users = {};
 
@@ -81,11 +58,44 @@ exports.getDialog = async (req, res) => {
       { sender_id, recipient_id },
       { recipient_id, sender_id }
     ] })
+    .select('date sender_id recipient_id content')
     .sort('-timestamp')
     .limit(10)
 
-  users[sender_id] = await User.findById(sender_id)
-  users[recipient_id] = await User.findById(recipient_id)
+  users[sender_id] = await User
+    .findById(sender_id)
+    .select('-_id avatar firstname lastname')
 
-  res.send({ messages, users });
+  users[recipient_id] = await User
+    .findById(recipient_id)
+    .select('-_id avatar firstname lastname')
+
+  res.json({ messages, users });
+}
+
+exports.addFriend = async (req, res) => {
+  // const userID = req.user._id;
+  const userID = '594fdaa22c6bb513a08b4648';
+  const friendID = req.body.id;
+
+  await User.findByIdAndUpdate(userID, { $addToSet: { friends: friendID } })
+
+  res.json(friendID);
+}
+
+exports.deleteFriend = async (req, res) => {
+  // const userID = req.user._id;
+  const userID = '594fdaa22c6bb513a08b4648';
+  const friendID = req.body.id;
+
+  await User.findByIdAndUpdate(userID, { $pull: { friends: friendID } })
+
+  res.json(friendID);
+}
+
+exports.getPeople = async (req, res) => {
+  const limit = req.body.limit;
+  const people = await User.find().limit(limit);
+
+  res.json(people);
 }

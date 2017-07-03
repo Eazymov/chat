@@ -56,11 +56,11 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
   friends: {
-    type: Array,
+    type: [String],
     default: []
   },
   dialogs: {
-    type: Array,
+    type: [String],
     default: []
   }
 })

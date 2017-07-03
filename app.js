@@ -13,7 +13,6 @@ const app = express()
 app.set('view engine', 'pug')
 app.set('views', path.join(__dirname, 'views'))
 
-app.use('/dist', express.static(__dirname + '/dist'))
 app.use('/public', express.static(__dirname + '/public'))
 
 app.use(bodyParser.json())

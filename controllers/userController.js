@@ -11,73 +11,50 @@ exports.checkAuth = (req, res, next) => {
 exports.loginPage = (req, res) => {
   if (req.isAuthenticated()) res.redirect('/chat');
 
-  res.sendFile(path.resolve(__dirname, '../views/login.html'))
+  res.render('login', { title: '', base: '/chat/' })
 }
 
 exports.login = (req, res) => {
   passport.authenticate('basic', (err, user, info) => {
     if (err)
-      return res.send({ err })
+      throw err;
 
-    if (!user) {
-      const err = { message: 'No user with this username & password' }
-
-      return res.send({ err })
-    }
+    if (!user)
+      throw Error('No user with this username & password');
 
     req.logIn(user, err => {
       if (err)
-        return res.send({ err })
+        throw err;
 
       res.send({ success: true })
     })
   })(req, res)
 }
 
-exports.signup = async (req, res) => {
-  const { firstname, lastname, username, email, password, gender } = req.body;
-  let user = null;
+exports.signUp = async (req, res) => {
+  const { result, comment } = helpers.checkUserData(req.body);
+  const { username, email } = req.body;
 
-  user = await User.findOne({ username })
+  if (!result)
+    throw Error(comment)
 
-  if (user) {
-    const err = { message: 'This username is already taken' }
-    return res.send({ err })
-  }
+  let user = await User.findOne({ username })
+
+  if (user)
+    throw Error('This username is already taken')
 
   user = await User.findOne({ email })
 
-  if (user) {
-    const err = { message: 'This email is already taken' }
-    return res.send({ err });
-  }
+  if (user)
+    throw Error('This email is already taken')
 
-  const newUser = new User({
-    firstname,
-    lastname,
-    username,
-    email,
-    password,
-    gender
-  })
+  const newUser = await (new User(req.body)).save()
 
-  const test = helpers.checkUserData(newUser);
-
-  if (!test.result) {
-    const err = { message: test.comment }
-    return res.send({ err })
-  }
-
-  newUser.save((err, user) => {
+  req.logIn(newUser, err => {
     if (err)
-      return res.send({ err })
+      throw err;
 
-    req.logIn(user, err => {
-      if (err)
-        return res.send({ err })
-
-      res.send({ success: true })
-    })
+    res.send({ success: true })
   })
 }
 
